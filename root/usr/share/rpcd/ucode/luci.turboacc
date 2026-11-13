@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: GPL-3.0-only
+//
+// Copyright (C) 2026 Arthur97172
+//
+// rpcd plugin backing the TurboACC LuCI page.
+
+'use strict';
+
+import * as core from 'turboacc.core';
+
+return {
+	'luci.turboacc': {
+		getSystemFeatures: {
+			call: function() {
+				return core.detect();
+			}
+		},
+		getStatus: {
+			call: function() {
+				return core.status();
+			}
+		}
+	}
+};

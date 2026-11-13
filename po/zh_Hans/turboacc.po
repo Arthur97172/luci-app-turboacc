@@ -1,0 +1,150 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-turboacc\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_Hans\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Accelerate forwarded traffic with flow offloading, vendor hardware NAT, full-cone NAT and TCP congestion control. Requires firewall4 (nftables)."
+msgstr "使用流量卸载、厂商硬件 NAT、全锥形 NAT 与 TCP 拥塞控制加速转发流量。需要 firewall4（nftables）。"
+
+msgid "Accelerate IPv6 traffic as well."
+msgstr "同时加速 IPv6 流量。"
+
+msgid "Acceleration"
+msgstr "加速"
+
+msgid "Acceleration engine"
+msgstr "加速引擎"
+
+msgid "Algorithm applied system-wide to new TCP connections."
+msgstr "应用于系统范围内新建 TCP 连接的算法。"
+
+msgid "Also offload traffic between bridged LAN ports."
+msgstr "同时卸载桥接 LAN 端口之间的流量。"
+
+msgid "Bridge acceleration"
+msgstr "桥接加速"
+
+msgid "Broadcom full-cone NAT1"
+msgstr "博通全锥形 NAT1"
+
+msgid "Congestion control algorithm"
+msgstr "拥塞控制算法"
+
+msgid "Disabled"
+msgstr "已禁用"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Enable Wireless Ethernet Dispatch on MediaTek Wi-Fi 6/7 radios."
+msgstr "在联发科 Wi-Fi 6/7 射频上启用无线以太网分发（WED）。"
+
+msgid "Ethernet HNAT"
+msgstr "以太网 HNAT"
+
+msgid "Fast classifier (SFE)"
+msgstr "快速分类器（SFE）"
+
+msgid "Flow offloading"
+msgstr "流量卸载"
+
+msgid "Full-cone NAT"
+msgstr "全锥形 NAT"
+
+msgid "Full-cone NAT for IPv6"
+msgstr "为 IPv6 启用全锥形 NAT"
+
+msgid "Full-cone NAT lets peers reach services behind the router without port forwarding."
+msgstr "全锥形 NAT 允许外部对等端在没有端口转发的情况下访问路由器后的服务。"
+
+msgid "Full-cone NAT mode"
+msgstr "全锥形 NAT 模式"
+
+msgid "FULLCONENAT (nftables)"
+msgstr "FULLCONENAT（nftables）"
+
+msgid "Hardware"
+msgstr "硬件"
+
+msgid "Hardware flow offloading"
+msgstr "硬件流量卸载"
+
+msgid "Hardware offload"
+msgstr "硬件卸载"
+
+msgid "Hardware offload IPv6"
+msgstr "硬件卸载 IPv6"
+
+msgid "IPv6 acceleration"
+msgstr "IPv6 加速"
+
+msgid "IPv6 HNAT"
+msgstr "IPv6 HNAT"
+
+msgid "MediaTek HNAT"
+msgstr "联发科 HNAT"
+
+msgid "Most IPv6 deployments do not need full-cone NAT."
+msgstr "大多数 IPv6 部署不需要全锥形 NAT。"
+
+msgid "No acceleration engine is used."
+msgstr "未使用加速引擎。"
+
+msgid "Not running"
+msgstr "未运行"
+
+msgid "Offload Ethernet forwarding through the MediaTek HNAT engine."
+msgstr "通过联发科 HNAT 引擎卸载以太网转发。"
+
+msgid "Offload flows to the SoC flow table. Falls back to software offloading when the hardware cannot handle a flow."
+msgstr "将数据流卸载到 SoC 流表。硬件无法处理该流时回退到软件卸载。"
+
+msgid "Offload IPv6 traffic as well."
+msgstr "同时卸载 IPv6 流量。"
+
+msgid "Platform"
+msgstr "平台"
+
+msgid "QCA NSS ECM"
+msgstr "高通 NSS ECM"
+
+msgid "Qualcomm NSS ECM acceleration daemon."
+msgstr "高通 NSS ECM 加速守护进程。"
+
+msgid "Runtime status"
+msgstr "运行状态"
+
+msgid "Shortcut-FE CM"
+msgstr "Shortcut-FE CM"
+
+msgid "Shortcut-FE connection manager kernel module."
+msgstr "Shortcut-FE 连接管理内核模块。"
+
+msgid "Shortcut-FE fast classifier kernel module. Not compatible with firewall4 flow offloading."
+msgstr "Shortcut-FE 快速分类器内核模块，与 firewall4 流量卸载不兼容。"
+
+msgid "Software or hardware flow offloading implemented by firewall4 (nftables)."
+msgstr "由 firewall4（nftables）实现的软件或硬件流量卸载。"
+
+msgid "TCP congestion control"
+msgstr "TCP 拥塞控制"
+
+msgid "TurboACC"
+msgstr "TurboACC加速"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "Vendor hardware NAT offload for MediaTek SoCs (mtkhnat)."
+msgstr "联发科 SoC 的厂商硬件 NAT 卸载（mtkhnat）。"
+
+msgid "When disabled, IPv6 traffic takes the regular forwarding path while IPv4 is hardware offloaded."
+msgstr "禁用时，IPv6 流量走常规转发路径，仅 IPv4 使用硬件卸载。"
+
+msgid "Wireless WED offload"
+msgstr "无线 WED 卸载"

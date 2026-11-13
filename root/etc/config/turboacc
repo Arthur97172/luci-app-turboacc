@@ -1,0 +1,17 @@
+# TurboACC configuration
+#
+# All options live in this file; /etc/config/firewall is only touched by
+# /etc/init.d/turboacc with the derived settings firewall4 understands.
+
+config turboacc 'config'
+	option fastpath 'disabled'
+	option fastpath_fo_hw '0'
+	option fastpath_fo_hw_ipv6 '1'
+	option fastpath_fc_br '1'
+	option fastpath_fc_ipv6 '1'
+	option fastpath_mh_eth_hnat '1'
+	option fastpath_mh_eth_hnat_v6 '1'
+	option fastpath_mh_eth_hnat_wed '0'
+	option fullcone '0'
+	option fullcone6 '0'
+	option tcpcca 'cubic'

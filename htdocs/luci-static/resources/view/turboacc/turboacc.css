@@ -1,0 +1,105 @@
+/*
+ * TurboACC runtime status card.
+ *
+ * Deliberately theme-neutral: no background or text colours are forced, so
+ * luci-theme-bootstrap (light and dark), luci-theme-argon 2.x (which swaps a
+ * separate dark stylesheet) and luci-theme-argon 3.x all keep their own
+ * palette. Only the status dots carry colour.
+ */
+
+.turboacc-status {
+	--ta-ok: #2e9e4f;
+	--ta-off: #8a8f98;
+	--ta-warn: #c98a00;
+	--ta-rule: rgba(128, 128, 128, 0.3);
+}
+
+.turboacc-status > h3 {
+	margin-top: 0;
+}
+
+.turboacc-status-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.turboacc-status-table th,
+.turboacc-status-table td {
+	padding: 0.35rem 0.5rem;
+	text-align: left;
+	vertical-align: middle;
+}
+
+.turboacc-status-table th {
+	width: 12rem;
+	font-weight: 600;
+}
+
+.turboacc-status-table tr + tr th,
+.turboacc-status-table tr + tr td {
+	border-top: 1px solid var(--ta-rule);
+}
+
+.turboacc-dot {
+	display: inline-block;
+	width: 0.65rem;
+	height: 0.65rem;
+	margin-right: 0.45rem;
+	border-radius: 50%;
+	background: var(--ta-off);
+	vertical-align: baseline;
+}
+
+.turboacc-dot.is-on {
+	background: var(--ta-ok);
+}
+
+.turboacc-dot.is-warn {
+	background: var(--ta-warn);
+}
+
+.turboacc-engine {
+	font-weight: 500;
+}
+
+@media (max-width: 600px) {
+	.turboacc-status-table th {
+		width: auto;
+	}
+
+	.turboacc-status-table th,
+	.turboacc-status-table td {
+		display: block;
+		padding: 0.15rem 0.4rem;
+	}
+
+	.turboacc-status-table td {
+		padding-bottom: 0.5rem;
+	}
+}
+
+/*
+ * Dark palettes. luci-theme-bootstrap marks its dark mode on <html> with
+ * data-darkmode; luci-theme-argon 3.x uses data-argon-mode. Argon 2.x has
+ * no attribute at all (its dark.css is loaded on demand), which is why the
+ * card itself relies on inherited colours only.
+ */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-darkmode="false"]):not([data-argon-mode="light"]) .turboacc-status {
+		--ta-ok: #58c777;
+		--ta-off: #9aa0a6;
+		--ta-warn: #e0a030;
+		--ta-rule: rgba(200, 200, 200, 0.22);
+	}
+}
+
+:root[data-darkmode="true"] .turboacc-status,
+:root[data-argon-mode="dark"] .turboacc-status,
+body.dark .turboacc-status,
+body.dark-mode .turboacc-status,
+[data-theme="dark"] .turboacc-status {
+	--ta-ok: #58c777;
+	--ta-off: #9aa0a6;
+	--ta-warn: #e0a030;
+	--ta-rule: rgba(200, 200, 200, 0.22);
+}

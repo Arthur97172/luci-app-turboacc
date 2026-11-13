@@ -1,0 +1,14 @@
+{
+	"luci-app-turboacc": {
+		"description": "Grant access to the TurboACC configuration and runtime status",
+		"read": {
+			"ubus": {
+				"luci.turboacc": [ "getSystemFeatures", "getStatus" ]
+			},
+			"uci": [ "turboacc" ]
+		},
+		"write": {
+			"uci": [ "turboacc" ]
+		}
+	}
+}

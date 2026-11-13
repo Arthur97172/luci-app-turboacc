@@ -1,0 +1,30 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Copyright (C) 2026 Arthur97172
+
+[ -n "$IPKG_INSTROOT" ] && exit 0
+[ -x /usr/bin/ucode ] || exit 0
+
+# First install only: pick the best engine the hardware actually supports.
+# The initialized flag keeps a later package upgrade from overriding the
+# user's choice.
+/usr/bin/ucode /usr/share/ucode/turboacc/main.uc defaults
+
+/etc/init.d/turboacc enable >/dev/null 2>&1
+/etc/init.d/turboacc start >/dev/null 2>&1
+
+# The ucitrack procd instance registered its config.change triggers at boot,
+# when this package may not have existed yet.
+if [ -x /etc/init.d/ucitrack ]; then
+	/etc/init.d/ucitrack restart >/dev/null 2>&1
+fi
+
+# rpcd loads /usr/share/rpcd/ucode plugins at startup, so the status plugin
+# only becomes reachable after a reload.
+[ -x /etc/init.d/rpcd ] && /etc/init.d/rpcd reload >/dev/null 2>&1
+
+rm -f /tmp/luci-indexcache* 2>/dev/null
+rm -rf /tmp/luci-modulecache 2>/dev/null
+
+exit 0

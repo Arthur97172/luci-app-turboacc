@@ -1,0 +1,16 @@
+# Build outputs
+*.ipk
+*.apk
+*.tar.zst
+sdk/
+build_dir/
+staging_dir/
+bin/
+dl/
+.tmp/
+
+# Editor and OS noise
+*~
+*.swp
+.DS_Store
+node_modules/

@@ -1,0 +1,4 @@
+{
+	"config": "turboacc",
+	"exec": "/etc/init.d/turboacc reload"
+}

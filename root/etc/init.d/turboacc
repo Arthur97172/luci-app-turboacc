@@ -1,0 +1,29 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Copyright (C) 2026 Arthur97172
+#
+# Deliberately not USE_PROCD: ucitrack installs a config.change reload
+# trigger only for non-procd services, and that trigger is what applies a
+# LuCI save immediately.
+
+START=90
+STOP=10
+
+ucode_bin="/usr/bin/ucode"
+runner="/usr/share/ucode/turboacc/main.uc"
+
+start() {
+	[ -x "$ucode_bin" ] && [ -r "$runner" ] || return 0
+	"$ucode_bin" "$runner" apply
+}
+
+stop() {
+	[ -x "$ucode_bin" ] && [ -r "$runner" ] || return 0
+	"$ucode_bin" "$runner" stop
+}
+
+reload() {
+	[ -x "$ucode_bin" ] && [ -r "$runner" ] || return 0
+	"$ucode_bin" "$runner" apply
+}

@@ -1,0 +1,148 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-turboacc\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Accelerate forwarded traffic with flow offloading, vendor hardware NAT, full-cone NAT and TCP congestion control. Requires firewall4 (nftables)."
+msgstr ""
+
+msgid "Accelerate IPv6 traffic as well."
+msgstr ""
+
+msgid "Acceleration"
+msgstr ""
+
+msgid "Acceleration engine"
+msgstr ""
+
+msgid "Algorithm applied system-wide to new TCP connections."
+msgstr ""
+
+msgid "Also offload traffic between bridged LAN ports."
+msgstr ""
+
+msgid "Bridge acceleration"
+msgstr ""
+
+msgid "Broadcom full-cone NAT1"
+msgstr ""
+
+msgid "Congestion control algorithm"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Enable Wireless Ethernet Dispatch on MediaTek Wi-Fi 6/7 radios."
+msgstr ""
+
+msgid "Ethernet HNAT"
+msgstr ""
+
+msgid "Fast classifier (SFE)"
+msgstr ""
+
+msgid "Flow offloading"
+msgstr ""
+
+msgid "Full-cone NAT"
+msgstr ""
+
+msgid "Full-cone NAT for IPv6"
+msgstr ""
+
+msgid "Full-cone NAT lets peers reach services behind the router without port forwarding."
+msgstr ""
+
+msgid "Full-cone NAT mode"
+msgstr ""
+
+msgid "FULLCONENAT (nftables)"
+msgstr ""
+
+msgid "Hardware"
+msgstr ""
+
+msgid "Hardware flow offloading"
+msgstr ""
+
+msgid "Hardware offload"
+msgstr ""
+
+msgid "Hardware offload IPv6"
+msgstr ""
+
+msgid "IPv6 acceleration"
+msgstr ""
+
+msgid "IPv6 HNAT"
+msgstr ""
+
+msgid "MediaTek HNAT"
+msgstr ""
+
+msgid "Most IPv6 deployments do not need full-cone NAT."
+msgstr ""
+
+msgid "No acceleration engine is used."
+msgstr ""
+
+msgid "Not running"
+msgstr ""
+
+msgid "Offload Ethernet forwarding through the MediaTek HNAT engine."
+msgstr ""
+
+msgid "Offload flows to the SoC flow table. Falls back to software offloading when the hardware cannot handle a flow."
+msgstr ""
+
+msgid "Offload IPv6 traffic as well."
+msgstr ""
+
+msgid "Platform"
+msgstr ""
+
+msgid "QCA NSS ECM"
+msgstr ""
+
+msgid "Qualcomm NSS ECM acceleration daemon."
+msgstr ""
+
+msgid "Runtime status"
+msgstr ""
+
+msgid "Shortcut-FE CM"
+msgstr ""
+
+msgid "Shortcut-FE connection manager kernel module."
+msgstr ""
+
+msgid "Shortcut-FE fast classifier kernel module. Not compatible with firewall4 flow offloading."
+msgstr ""
+
+msgid "Software or hardware flow offloading implemented by firewall4 (nftables)."
+msgstr ""
+
+msgid "TCP congestion control"
+msgstr ""
+
+msgid "TurboACC"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Vendor hardware NAT offload for MediaTek SoCs (mtkhnat)."
+msgstr ""
+
+msgid "When disabled, IPv6 traffic takes the regular forwarding path while IPv4 is hardware offloaded."
+msgstr ""
+
+msgid "Wireless WED offload"
+msgstr ""
