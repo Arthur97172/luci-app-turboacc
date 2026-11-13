@@ -6,7 +6,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Accelerate forwarded traffic with flow offloading, vendor hardware NAT, full-cone NAT and TCP congestion control. Requires firewall4 (nftables)."
+msgid "Accelerate forwarded traffic with flow offloading, vendor hardware NAT, full-cone NAT and TCP congestion control."
 msgstr ""
 
 msgid "Accelerate IPv6 traffic as well."

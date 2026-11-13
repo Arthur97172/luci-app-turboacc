@@ -62,6 +62,14 @@
 	font-weight: 500;
 }
 
+/*
+ * The disabled and QCA NSS ECM engines have no sub-options, so the
+ * acceleration section would otherwise end right below the engine selector.
+ */
+.turboacc-page .cbi-section.turboacc-sparse {
+	padding-bottom: 1.5rem;
+}
+
 @media (max-width: 600px) {
 	.turboacc-status-table th {
 		width: auto;

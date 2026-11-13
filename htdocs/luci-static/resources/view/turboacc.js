@@ -164,7 +164,7 @@ return view.extend({
 		var ListValue = form.RichListValue || form.ListValue;
 
 		var map = new form.Map('turboacc', _('TurboACC'),
-			_('Accelerate forwarded traffic with flow offloading, vendor hardware NAT, full-cone NAT and TCP congestion control. Requires firewall4 (nftables).'));
+			_('Accelerate forwarded traffic with flow offloading, vendor hardware NAT, full-cone NAT and TCP congestion control.'));
 
 		var section = map.section(form.NamedSection, 'config', 'turboacc', _('Acceleration'));
 		section.addremove = false;
@@ -265,7 +265,42 @@ return view.extend({
 				}, this));
 			}, this), 5);
 
-			return E('div', { 'class': 'turboacc-page' }, [ card.node, node ]);
+			/*
+			 * The map renders its title and description as the first children of
+			 * its root node, so the status card goes right after them to keep the
+			 * heading on top of the runtime status.
+			 */
+			var first = node.querySelector('.cbi-section');
+
+			if (first != null)
+				node.insertBefore(card.node, first);
+			else
+				node.appendChild(card.node);
+
+			/*
+			 * The disabled and QCA NSS ECM engines expose no sub-options, leaving
+			 * the acceleration section flush against the next one.
+			 */
+			var frame = node.querySelector('#cbi-turboacc-config-fastpath');
+			var accel = frame != null ? frame.closest('.cbi-section') : null;
+
+			if (accel != null) {
+				var updateSpacing = function() {
+					var widget = option.getUIElement('config');
+					var engine = widget != null ? widget.getValue() : null;
+
+					if (Array.isArray(engine))
+						engine = engine[0];
+
+					accel.classList.toggle('turboacc-sparse',
+						engine == 'disabled' || engine == 'qca_nss_ecm');
+				};
+
+				node.addEventListener('widget-change', updateSpacing);
+				updateSpacing();
+			}
+
+			return E('div', { 'class': 'turboacc-page' }, [ node ]);
 		}, this));
 	}
 });

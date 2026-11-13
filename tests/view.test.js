@@ -28,12 +28,123 @@ Sync.prototype.catch = function(onRejected) {
 	return this.then(undefined, onRejected);
 };
 
+function classes(node) {
+	return String(node.attrs['class'] || '').split(/\s+/).filter(Boolean);
+}
+
+function hasClass(node, name) {
+	return classes(node).indexOf(name) >= 0;
+}
+
+function setClass(node, name, enabled) {
+	const list = classes(node).filter(function(c) { return c !== name; });
+
+	if (enabled)
+		list.push(name);
+
+	node.attrs['class'] = list.join(' ');
+}
+
+function matches(node, selector) {
+	if (selector[0] === '#')
+		return node.attrs.id === selector.slice(1);
+
+	if (selector[0] === '.')
+		return hasClass(node, selector.slice(1));
+
+	return node.tag === selector;
+}
+
+function find(node, selector) {
+	for (const child of node.children) {
+		if (child == null || typeof child !== 'object' || child.tag == null)
+			continue;
+
+		if (matches(child, selector))
+			return child;
+
+		const found = find(child, selector);
+
+		if (found != null)
+			return found;
+	}
+
+	return null;
+}
+
 function E(tag, attrs, children) {
-	return {
+	const node = {
 		tag: tag,
 		attrs: attrs || {},
-		children: children == null ? [] : (Array.isArray(children) ? children : [ children ])
+		children: children == null ? [] : (Array.isArray(children) ? children : [ children ]),
+		parent: null,
+		listeners: {},
+
+		querySelector: function(selector) { return find(this, selector); },
+
+		closest: function(selector) {
+			let cur = this;
+
+			while (cur != null) {
+				if (cur.tag != null && matches(cur, selector))
+					return cur;
+
+				cur = cur.parent;
+			}
+
+			return null;
+		},
+
+		appendChild: function(child) {
+			child.parent = this;
+			this.children.push(child);
+			return child;
+		},
+
+		insertBefore: function(child, ref) {
+			const index = this.children.indexOf(ref);
+
+			child.parent = this;
+
+			if (index < 0)
+				this.children.push(child);
+			else
+				this.children.splice(index, 0, child);
+
+			return child;
+		},
+
+		addEventListener: function(type, fn) {
+			(this.listeners[type] = this.listeners[type] || []).push(fn);
+		},
+
+		dispatchEvent: function(ev) {
+			for (const fn of this.listeners[ev.type] || [])
+				fn(ev);
+
+			return true;
+		},
+
+		classList: {
+			contains: function(name) { return hasClass(node, name); },
+			add: function(name) { setClass(node, name, true); },
+			remove: function(name) { setClass(node, name, false); },
+			toggle: function(name, force) {
+				const on = force == null ? !hasClass(node, name) : !!force;
+
+				setClass(node, name, on);
+
+				return on;
+			}
+		}
 	};
+
+	for (const child of node.children) {
+		if (child != null && typeof child === 'object' && child.tag != null)
+			child.parent = node;
+	}
+
+	return node;
 }
 
 function makeForm() {
@@ -46,7 +157,12 @@ function makeForm() {
 		this.dependsOn = [];
 		this.def = null;
 		this.rmempty = true;
+		this.widget = null;
 	}
+
+	Option.prototype.getUIElement = function() {
+		return this.widget;
+	};
 
 	Option.prototype.value = function(value, label, desc) {
 		this.values.push({ value: value, label: label, desc: desc });
@@ -94,9 +210,34 @@ function makeForm() {
 	};
 
 	Map.prototype.render = function() {
-		return new Sync(E('div', { 'class': 'cbi-map' }, [
-			E('h2', {}, this.title)
-		]));
+		const mapEl = E('div', { 'class': 'cbi-map' }, [
+			E('h2', { 'name': 'content' }, this.title),
+			E('div', { 'class': 'cbi-map-descr' }, this.desc)
+		]);
+
+		for (const section of this.sections) {
+			const sectionEl = E('div', { 'class': 'cbi-section' }, [ E('h3', {}, section.title) ]);
+
+			for (const option of section.options) {
+				option.widget = {
+					value: (option.name === 'fastpath' && this.fastpath != null)
+						? this.fastpath : (option.def != null ? option.def : '0'),
+					getValue: function() { return this.value; }
+				};
+
+				/* Section() receives the UCI section id in its config slot. */
+				sectionEl.appendChild(E('div', {
+					'class': 'cbi-value',
+					'id': 'cbi-' + this.config + '-' + section.config + '-' + option.name
+				}, [
+					E('div', { 'id': 'cbid.' + this.config + '.' + section.config + '.' + option.name })
+				]));
+			}
+
+			mapEl.appendChild(sectionEl);
+		}
+
+		return new Sync(mapEl);
 	};
 
 	function ListValue(name, title, desc) { Option.call(this, 'ListValue', name, title, desc); }
@@ -173,6 +314,7 @@ function loadView(options) {
 	const MapClass = form.Map;
 	form.Map = function(config, title, desc) {
 		const instance = new MapClass(config, title, desc);
+		instance.fastpath = options.fastpath;
 		form.maps.push(instance);
 		return instance;
 	};
@@ -238,8 +380,15 @@ const stockStatus = { engine: 'flow_offloading', hw: false, fullcone: '0', cca: 
 const stock = render(stockFeatures, stockStatus, 'flow_offloading');
 
 eq(stock.page.attrs['class'], 'turboacc-page', 'page wraps the map in a styled container');
-eq(stock.page.children[0].attrs['class'], 'cbi-section turboacc-status', 'status card comes first');
-eq(stock.page.children[1].attrs['class'], 'cbi-map', 'form map follows the status card');
+eq(stock.page.children.length, 1, 'page contains only the form map');
+eq(stock.page.children[0].attrs['class'], 'cbi-map', 'form map fills the page');
+eq(stock.page.children[0].children[0].tag, 'h2', 'map title is rendered first');
+eq(stock.page.children[0].children[0].children, [ 'TurboACC' ], 'map title text');
+eq(stock.page.children[0].children[1].attrs['class'], 'cbi-map-descr', 'description follows the title');
+eq(stock.page.children[0].children[2].attrs['class'], 'cbi-section turboacc-status',
+	'status card follows the description');
+eq(stock.page.children[0].children[3].attrs['class'], 'cbi-section',
+	'acceleration section follows the status card');
 
 eq(stock.env.appended.length, 1, 'stylesheet injected once');
 eq(stock.env.appended[0].attrs.rel, 'stylesheet', 'stylesheet link has rel');
@@ -258,7 +407,7 @@ eq(values(findOption(stock.map, 'fastpath')), [ 'disabled', 'flow_offloading' ],
 eq(stock.map.sections[1].title, 'TCP congestion control', 'third section is TCP congestion control');
 eq(values(findOption(stock.map, 'tcpcca')), [ 'cubic' ], 'cca dropdown lists the available algorithms');
 
-const card = stock.page.children[0];
+const card = stock.page.children[0].children[2];
 eq(card.children[0].tag, 'h3', 'status card has a heading');
 eq(card.children[0].children, [ 'Runtime status' ], 'status card heading text');
 eq(card.children[1].tag, 'table', 'status card renders a table');
@@ -276,7 +425,7 @@ eq(platformCell.children, [ 'x86/64 · x86_64 · 6.6.93' ], 'platform row joins 
 
 const nftFullcone = render(stockFeatures,
 	{ engine: 'flow_offloading', hw: false, fullcone: 'nft', cca: 'cubic' }, 'flow_offloading');
-const fullconeCell = nftFullcone.page.children[0].children[1].children[0].children[2].children[1];
+const fullconeCell = nftFullcone.page.children[0].children[2].children[1].children[0].children[2].children[1];
 eq(fullconeCell.children, [ 'FULLCONENAT (nftables)' ],
 	'status card understands the runtime full-cone mode names');
 
@@ -333,6 +482,27 @@ const qca = render({ offloading: false, engines: { qca_nss_ecm: true }, cca: [ '
 eq(values(findOption(qca.map, 'fastpath')), [ 'disabled', 'qca_nss_ecm' ],
 	'engine list adapts when flow offloading is unavailable');
 
+/* --- engines without sub-options leave room below the section ------------- */
+
+const sparsePage = qca.page.children[0];
+const sparseSection = sparsePage.querySelector('#cbi-turboacc-config-fastpath')
+	.closest('.cbi-section');
+
+ok(hasClass(sparseSection, 'turboacc-sparse'),
+	'the QCA NSS ECM engine pads the acceleration section');
+
+const engineWidget = findOption(qca.map, 'fastpath').widget;
+
+engineWidget.value = 'disabled';
+sparsePage.dispatchEvent({ type: 'widget-change' });
+ok(hasClass(sparseSection, 'turboacc-sparse'),
+	'the disabled engine pads the acceleration section');
+
+engineWidget.value = 'flow_offloading';
+sparsePage.dispatchEvent({ type: 'widget-change' });
+ok(!hasClass(sparseSection, 'turboacc-sparse'),
+	'engines with sub-options drop the extra padding');
+
 /* --- stylesheet: theme neutral and dark-mode aware ------------------------ */
 
 const css = read('htdocs/luci-static/resources/view/turboacc/turboacc.css');
@@ -347,5 +517,7 @@ ok(/:not\(\[data-darkmode="false"\]\)/.test(css),
 ok(!/!important/.test(css), 'stylesheet never forces values with !important');
 ok(!/^\s*body\s*\{/m.test(css), 'stylesheet does not restyle the page body');
 ok(!/\bbackground-color\s*:/.test(css), 'stylesheet leaves page backgrounds to the theme');
+ok(/\.turboacc-page \.cbi-section\.turboacc-sparse\s*\{/.test(css),
+	'stylesheet pads sections that have no sub-options');
 
 summary('view.test.js');
