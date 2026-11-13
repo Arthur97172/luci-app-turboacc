@@ -8,9 +8,8 @@ congestion control on OpenWrt / ImmortalWrt.
 
 Highlights:
 
-- the frontend moved from Lua CBI to the **LuCI JavaScript** API, the backend from shell +
-  iptables to **ucode + nftables**;
-- **firewall4 only** — all firewall3 / iptables code is gone;
+- the frontend uses the **LuCI JavaScript** API, the backend uses **ucode + nftables**;
+- **firewall4 only**;
 - a single `all` / `noarch` package works on **ARM and x86** (and MIPS, etc.); available
   features are decided at runtime from the hardware;
 - light and **dark themes switch automatically**, no manual toggle;
@@ -35,7 +34,7 @@ offload, full-cone mode, congestion control algorithm and platform details.
 ## Requirements
 
 - OpenWrt / ImmortalWrt **24.10** (opkg) or **25.12** (apk), or contemporary snapshots;
-- **firewall4** — the package depends on it and offers no firewall3 support;
+- **firewall4** — the package depends on it;
 - `ucode` with its `fs` and `uci` modules (shipped by default since OpenWrt 24.10).
 
 The package does not build kernel modules. Vendor acceleration (HNAT, NSS, SFE) requires
@@ -66,6 +65,31 @@ Uninstall:
 opkg remove luci-app-turboacc   # 24.10
 apk del luci-app-turboacc       # 25.12
 ```
+
+## Build and test locally
+
+The tests need nothing but Node.js:
+
+```sh
+node tests/run.js
+```
+
+Compiling needs the SDK matching the target release:
+
+```sh
+# 24.10 x86/64 as an example
+curl -LO https://downloads.openwrt.org/releases/24.10.8/targets/x86/64/openwrt-sdk-24.10.8-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+tar -xf openwrt-sdk-24.10.8-*.tar.zst
+mv openwrt-sdk-* sdk
+mkdir -p sdk/package/luci-app-turboacc
+cp -r Makefile htdocs po root sdk/package/luci-app-turboacc/
+cd sdk
+./scripts/feeds update -a && ./scripts/feeds install -a
+make defconfig
+make package/luci-app-turboacc/compile V=s
+```
+
+The packages land in `sdk/bin/packages/*/base/`, including `luci-i18n-turboacc-zh-cn`.
 
 ## How it works
 
@@ -141,31 +165,6 @@ root/usr/share/{luci/menu.d,rpcd/acl.d,ucitrack}/...
 tests/                                    # Node.js test suite
 .github/workflows/build.yml               # builds ipk / apk and publishes a release
 ```
-
-## Build and test locally
-
-The tests need nothing but Node.js:
-
-```sh
-node tests/run.js
-```
-
-Compiling needs the SDK matching the target release:
-
-```sh
-# 24.10 x86/64 as an example
-curl -LO https://downloads.openwrt.org/releases/24.10.8/targets/x86/64/openwrt-sdk-24.10.8-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-tar -xf openwrt-sdk-24.10.8-*.tar.zst
-mv openwrt-sdk-* sdk
-mkdir -p sdk/package/luci-app-turboacc
-cp -r Makefile htdocs po root sdk/package/luci-app-turboacc/
-cd sdk
-./scripts/feeds update -a && ./scripts/feeds install -a
-make defconfig
-make package/luci-app-turboacc/compile V=s
-```
-
-The packages land in `sdk/bin/packages/*/base/`, including `luci-i18n-turboacc-zh-cn`.
 
 ## CI
 

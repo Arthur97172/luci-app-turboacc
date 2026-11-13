@@ -7,8 +7,8 @@ TurboACC 的 LuCI 前端，基于 **firewall4（nftables）** 重写，纯 JavaS
 
 本仓库的主要特点：
 
-- 前端从 Lua CBI 改写为 **LuCI JavaScript**，后端从 shell + iptables 改写为 **ucode + nftables**；
-- **只支持 firewall4**，firewall3 / iptables 相关代码全部移除；
+- 前端使用 **LuCI JavaScript**，后端使用 **ucode + nftables**；
+- **只支持 firewall4**；
 - 同一份 `all` / `noarch` 产物同时适用于 **ARM 与 x86**（以及 MIPS 等其它架构），运行时按硬件能力决定可用项；
 - 自动适配 **亮色 / 暗色主题**，无需手动切换；
 - 适配 **luci-theme-bootstrap**（OpenWrt 24.10 / 25.12 默认主题）与 **luci-theme-argon 2.x / 3.x**。
@@ -31,7 +31,7 @@ TurboACC 的 LuCI 前端，基于 **firewall4（nftables）** 重写，纯 JavaS
 ## 环境要求
 
 - OpenWrt / ImmortalWrt **24.10**（opkg）或 **25.12**（apk），或同代主线快照；
-- **firewall4**：本包硬依赖 `firewall4`，不提供 firewall3 支持；
+- **firewall4**：本包硬依赖 `firewall4`；
 - `ucode` 及其 `fs` / `uci` 模块（OpenWrt 24.10 起为默认组件）。
 
 软件包本身不编译内核模块。要使用厂商加速（HNAT、NSS、SFE），需要设备固件或第三方 feed
@@ -60,6 +60,31 @@ apk add --allow-untrusted luci-i18n-turboacc-zh-cn-*.apk
 opkg remove luci-app-turboacc   # 24.10
 apk del luci-app-turboacc       # 25.12
 ```
+
+## 本地构建与测试
+
+测试不需要 OpenWrt 环境：
+
+```sh
+node tests/run.js
+```
+
+编译安装包需要对应版本的 SDK：
+
+```sh
+# 以 24.10 x86/64 为例
+curl -LO https://downloads.openwrt.org/releases/24.10.8/targets/x86/64/openwrt-sdk-24.10.8-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+tar -xf openwrt-sdk-24.10.8-*.tar.zst
+mv openwrt-sdk-* sdk
+mkdir -p sdk/package/luci-app-turboacc
+cp -r Makefile htdocs po root sdk/package/luci-app-turboacc/
+cd sdk
+./scripts/feeds update -a && ./scripts/feeds install -a
+make defconfig
+make package/luci-app-turboacc/compile V=s
+```
+
+产物位于 `sdk/bin/packages/*/base/`，包含主包与 `luci-i18n-turboacc-zh-cn`。
 
 ## 工作原理
 
@@ -133,31 +158,6 @@ root/usr/share/{luci/menu.d,rpcd/acl.d,ucitrack}/...
 tests/                                    # Node.js 测试
 .github/workflows/build.yml               # 构建 ipk / apk 并发布 Release
 ```
-
-## 本地构建与测试
-
-测试不需要 OpenWrt 环境：
-
-```sh
-node tests/run.js
-```
-
-编译安装包需要对应版本的 SDK：
-
-```sh
-# 以 24.10 x86/64 为例
-curl -LO https://downloads.openwrt.org/releases/24.10.8/targets/x86/64/openwrt-sdk-24.10.8-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-tar -xf openwrt-sdk-24.10.8-*.tar.zst
-mv openwrt-sdk-* sdk
-mkdir -p sdk/package/luci-app-turboacc
-cp -r Makefile htdocs po root sdk/package/luci-app-turboacc/
-cd sdk
-./scripts/feeds update -a && ./scripts/feeds install -a
-make defconfig
-make package/luci-app-turboacc/compile V=s
-```
-
-产物位于 `sdk/bin/packages/*/base/`，包含主包与 `luci-i18n-turboacc-zh-cn`。
 
 ## CI
 
