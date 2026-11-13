@@ -171,8 +171,8 @@ tests/                                    # Node.js test suite
 `.github/workflows/build.yml` runs on push and on demand:
 
 1. `node tests/run.js`;
-2. builds with four SDK combinations: OpenWrt 24.10.8 (ipk) and 25.12.6 (apk), each on
-   `x86/64` and `armsr/armv8`;
+2. builds with two SDKs: OpenWrt 24.10.8 (ipk) and 25.12.6 (apk), both `x86/64`; the
+   packages are architecture independent, so the same files install on ARM too;
 3. verifies package metadata (URL, maintainer, architecture) and contents;
 4. publishes `.ipk`, `.apk` and the Chinese translation to a release named
    `PKG_VERSION-rPKG_RELEASE`.

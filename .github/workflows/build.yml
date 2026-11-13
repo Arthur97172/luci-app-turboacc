@@ -37,21 +37,14 @@ jobs:
       matrix:
         include:
           # 24.10 使用 opkg（.ipk），25.12 使用 apk（.apk）。
-          # 每个版本都在 x86/64 与 armsr/armv8 两种架构上各编译一次：
-          # 本包是 LUCI_PKGARCH:=all，产物架构无关，双架构编译用于验证
-          # Makefile 与依赖在两个目标上都能正常解析。
+          # 本包是 LUCI_PKGARCH:=all，产物与目标架构无关，所以每种包格式
+          # 只需要对应版本 x86/64 的 SDK 编译一次，同一份产物也能装到 ARM 上。
           - artifact: ipk-x86-64
             pkg_ext: ipk
             sdk_url: https://downloads.openwrt.org/releases/24.10.8/targets/x86/64/openwrt-sdk-24.10.8-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
-          - artifact: ipk-armsr-armv8
-            pkg_ext: ipk
-            sdk_url: https://downloads.openwrt.org/releases/24.10.8/targets/armsr/armv8/openwrt-sdk-24.10.8-armsr-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
           - artifact: apk-x86-64
             pkg_ext: apk
             sdk_url: https://downloads.openwrt.org/releases/25.12.6/targets/x86/64/openwrt-sdk-25.12.6-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
-          - artifact: apk-armsr-armv8
-            pkg_ext: apk
-            sdk_url: https://downloads.openwrt.org/releases/25.12.6/targets/armsr/armv8/openwrt-sdk-25.12.6-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
 
     steps:
       - name: Checkout source
@@ -138,6 +131,8 @@ jobs:
           # 主包必须带上视图、ucode 后端与 rpcd 插件；缺任何一个页面都打不开。
           for f in bin/packages/*/base/luci-app-turboacc_*.ipk; do
             [ -e "$f" ] || continue
+            # 解包时会先 cd 进临时目录，路径必须先转成绝对路径。
+            f=$(realpath "$f")
             d=$(mktemp -d)
             ( cd "$d" && tar -xzf "$f" ./data.tar.gz && tar -xzf data.tar.gz ) \
               || { echo "cannot unpack $f"; exit 1; }
@@ -227,7 +222,7 @@ jobs:
             else
               missing="${missing:+$missing、}.apk"
             fi
-            printf -- '- 架构无关（ipk 为 `all`，apk 为 `noarch`）：前端是纯 JavaScript 资源，同一份产物同时支持 ARM / x86 等平台；CI 已在 x86/64 与 armsr/armv8 上分别验证编译\n'
+            printf -- '- 架构无关（ipk 为 `all`，apk 为 `noarch`）：前端是纯 JavaScript 资源，同一份产物同时支持 ARM / x86 等平台\n'
             printf -- '- `luci-i18n-turboacc-zh-cn`：中文翻译包，单独安装；不装则界面显示英文\n'
             if [ -n "$missing" ]; then
               printf '\n注意：本次构建缺少：%s（详见 Actions 构建日志）\n' "$missing"

@@ -108,4 +108,13 @@ const sources = files('root').map(file => ({ file, body: read('root/' + file) })
 for (const source of sources)
 	ok(!forbidden.test(source.body), 'no firewall3 residue in root/' + source.file);
 
+const workflow = read('.github/workflows/build.yml');
+const sdkUrls = workflow.match(/https:\/\/downloads\.openwrt\.org\/releases\/[^\s"']+\.tar\.zst/g) || [];
+
+eq(sdkUrls.length, 2, 'CI uses one SDK per package format (ipk and apk)');
+ok(sdkUrls.every(url => url.includes('/targets/x86/64/')), 'CI SDKs are x86/64; the package itself is architecture independent');
+ok(!/armsr|armv8/.test(workflow), 'CI does not build a redundant second architecture');
+eq((workflow.match(/f=\$\(realpath "\$f"\)/g) || []).length, 2,
+	'ipk checks take absolute paths because they cd into a temp dir');
+
 summary('package.test.js');

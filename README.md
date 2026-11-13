@@ -164,8 +164,8 @@ tests/                                    # Node.js 测试
 `.github/workflows/build.yml` 在 push 与手动触发时：
 
 1. 运行 `node tests/run.js`；
-2. 用四个 SDK 组合编译：OpenWrt 24.10.8（ipk）与 25.12.6（apk），各在 `x86/64` 与
-   `armsr/armv8` 上编译一次；
+2. 用两个 SDK 编译：OpenWrt 24.10.8（ipk）与 25.12.6（apk），均为 `x86/64`；
+   产物与架构无关，同一份文件可直接安装到 ARM 设备；
 3. 校验包元数据（URL、Maintainer、架构）与包内文件；
 4. 把 `.ipk` / `.apk` 与中文翻译包发布到以 `PKG_VERSION-rPKG_RELEASE` 命名的 Release。
 
