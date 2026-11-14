@@ -399,13 +399,12 @@ eq(stock.env.appended[0].attrs['data-turboacc-style'], '', 'stylesheet is tagged
 eq(stock.env.polls.length, 1, 'status polling registered');
 eq(stock.env.polls[0].interval, 5, 'status poll interval is five seconds');
 
-eq(stock.map.sections.length, 2, 'stock system hides the full-cone section');
+eq(stock.map.sections.length, 1, 'stock system hides the full-cone and CCA sections');
 eq(stock.map.sections[0].title, 'Acceleration', 'first section is acceleration');
 eq(optionNames(stock.map.sections[0]), [ 'fastpath' ], 'acceleration has only the engine selector');
 eq(values(findOption(stock.map, 'fastpath')), [ 'disabled', 'flow_offloading' ],
 	'stock system offers disabled and flow offloading only');
-eq(stock.map.sections[1].title, 'TCP congestion control', 'third section is TCP congestion control');
-eq(values(findOption(stock.map, 'tcpcca')), [ 'cubic' ], 'cca dropdown lists the available algorithms');
+eq(findOption(stock.map, 'tcpcca'), null, 'one available algorithm hides the CCA selector');
 
 const card = stock.page.children[0].children[2];
 eq(card.children[0].tag, 'h3', 'status card has a heading');

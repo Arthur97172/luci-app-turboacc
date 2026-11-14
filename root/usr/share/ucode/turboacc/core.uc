@@ -170,27 +170,6 @@ function hnat_enabled() {
 	return value == '1' || value == 'enabled' || value == 'y' || value == 'yes';
 }
 
-function hnat_wlan() {
-	let i, value, handle, out;
-
-	for (i = 0; i < length(WED_PARAMS); i++) {
-		value = read_text(WED_PARAMS[i]);
-
-		if (value != null)
-			return value == 'Y' || value == '1' || value == 'y';
-	}
-
-	handle = fs.popen("grep -l 'WHNAT=1' /etc/wireless/mediatek/*_card*.dat 2>/dev/null");
-
-	if (handle == null)
-		return null;
-
-	out = handle.read('all');
-	handle.close();
-
-	return out != null && trim(out) != '';
-}
-
 function find_wed() {
 	let i;
 
@@ -634,7 +613,6 @@ function status() {
 		hw: false,
 		fullcone: null,
 		cca: read_text('/proc/sys/net/ipv4/tcp_congestion_control'),
-		hnat: null,
 		running: fs.access('/var/run/fw4.state') != null
 	};
 
@@ -649,7 +627,6 @@ function status() {
 	}
 	else if (hnat_enabled()) {
 		result.engine = 'mediatek_hnat';
-		result.hnat = { eth: true, wlan: hnat_wlan() };
 	}
 	else if (module_refcnt('nft_flow_offload') > 0) {
 		result.engine = 'flow_offloading';

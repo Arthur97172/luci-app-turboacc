@@ -103,6 +103,9 @@ ok(!/desired\.flow_offloading_hw = \(engine == 'flow_offloading' && settings\.fo
 	'apply keeps a manually enabled firewall setting on an unknown platform');
 ok(/result\.hw = boolval\(cursor\.get\(CONFIG, SECTION, 'fastpath_fo_hw'\)\)/.test(core),
 	'status derives hardware offload from the TurboACC setting, not the firewall alone');
+ok(!/hnat_wlan/.test(core),
+	'status does not probe Wireless HNAT that the UI never displays');
+ok(!/\bhnat:\s*null/.test(core), 'status carries no unused hnat field');
 
 /* Every external command is a fixed string; no uci value reaches the shell. */
 const systemCalls = core.match(/system\((.*)\)/g) || [];

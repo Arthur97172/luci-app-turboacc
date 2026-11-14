@@ -243,16 +243,20 @@ return view.extend({
 			fc6.default = '0';
 		}
 
-		var tcp = map.section(form.NamedSection, 'config', 'turboacc', _('TCP congestion control'));
-		tcp.addremove = false;
+		/* With one algorithm there is nothing to choose, and the status card
+		 * already reports the active one. */
+		if (features.cca.length > 1) {
+			var tcp = map.section(form.NamedSection, 'config', 'turboacc', _('TCP congestion control'));
+			tcp.addremove = false;
 
-		var cca = tcp.option(form.ListValue, 'tcpcca', _('Congestion control algorithm'),
-			_('Algorithm applied system-wide to new TCP connections.'));
-		features.cca.forEach(function(name) {
-			cca.value(name, String(name).toUpperCase());
-		});
-		cca.default = 'cubic';
-		cca.rmempty = false;
+			var cca = tcp.option(form.ListValue, 'tcpcca', _('Congestion control algorithm'),
+				_('Algorithm applied system-wide to new TCP connections.'));
+			features.cca.forEach(function(name) {
+				cca.value(name, String(name).toUpperCase());
+			});
+			cca.default = 'cubic';
+			cca.rmempty = false;
+		}
 
 		var card = this.renderStatusCard(features);
 

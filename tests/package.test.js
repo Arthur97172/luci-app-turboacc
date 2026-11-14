@@ -38,6 +38,7 @@ ok(/^LUCI_MAINTAINER:=Arthur97172 <Arthur97172@users\.noreply\.github\.com>$/m.t
 ok(/LUCI_DEPENDS:=.*\+luci-base/.test(makefile), 'depends on luci-base');
 ok(/LUCI_DEPENDS:=.*\+firewall4/.test(makefile), 'depends on firewall4');
 ok(/LUCI_DEPENDS:=.*\+ucode/.test(makefile), 'depends on ucode');
+ok(!/\+ucode-mod-ubus/.test(makefile), 'does not pull in the unused ubus module');
 ok(/include \$\(TOPDIR\)\/feeds\/luci\/luci\.mk/.test(makefile), 'includes luci.mk');
 ok(/^# call BuildPackage - OpenWrt buildroot signature$/m.test(makefile),
 	'Makefile carries the BuildPackage marker the metadata scanner greps for');

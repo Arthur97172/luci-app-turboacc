@@ -23,7 +23,7 @@ TurboACC 的 LuCI 前端，基于 **firewall4（nftables）** 重写，纯 JavaS
 | 联发科 HNAT | MediaTek `mtkhnat` 硬件 NAT（以太网 / IPv6 / WED 无线卸载） |
 | 高通 NSS | `qca-nss-ecm` 加速守护进程 |
 | 全锥形 NAT | nftables `fullcone` 语句或博通 `masquerade fullcone`，含 IPv6 开关 |
-| TCP 拥塞控制 | 从系统实际可用算法中选择（如 cubic / bbr） |
+| TCP 拥塞控制 | 从系统实际可用算法中选择（如 cubic / bbr）；只有一种可用算法时不显示选择项 |
 
 页面顶部的运行状态卡片每 5 秒轮询一次，显示当前真正生效的引擎、硬件卸载、全锥形模式、
 拥塞控制算法与平台信息。
@@ -119,7 +119,7 @@ config turboacc 'config'
 
 因此：
 
-- 原版 OpenWrt 上只会出现软件/硬件 flow offloading 与 TCP 拥塞控制；
+- 原版 OpenWrt 上只会出现软件/硬件 flow offloading，以及系统有多种拥塞控制算法时的选择项；
 - 打了 lede / ImmortalWrt fullcone 补丁的系统才会出现全锥形选项；
 - 有 `mtkhnat`（或 HNAT 调试节点）的系统才会出现联发科 HNAT 与 WED；
 - 有 `qca-nss-ecm` 的系统才会出现高通 NSS。
