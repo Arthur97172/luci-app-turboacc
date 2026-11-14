@@ -73,6 +73,28 @@ else {
 	ok(false, 'core defines the HW_COMPAT regexp');
 }
 
+const mtkCompat = core.match(/^const MTK_COMPAT = (\/.*\/);$/m);
+
+ok(mtkCompat != null, 'core defines the MediaTek compatible regexp');
+
+if (mtkCompat) {
+	const re = new RegExp(mtkCompat[1].slice(1, -1));
+
+	ok(re.test('mediatek,mt7986a'), 'MediaTek SoC compatible strings are recognised');
+	ok(!re.test('airoha,an7581'), 'Airoha SoC compatible strings are not treated as MediaTek');
+	ok(!re.test('gemtek,w1700k-ubi'), 'board compatible strings are not treated as MediaTek');
+}
+
+ok(/wed: find_wed\(\) != null && mtk_platform\(\)/.test(core),
+	'WED is advertised only on MediaTek platforms');
+ok(/mtk_platform\(\) && engine == 'flow_offloading'/.test(core),
+	'WED is written only on MediaTek platforms');
+
+ok(/cca_value\(current_cca \?\? 'cubic', features\.cca\)/.test(core),
+	'defaults preserve the current congestion control algorithm');
+ok(!/cca_value\('cubic', features\.cca\)/.test(core),
+	'defaults do not force cubic over the current sysctl');
+
 ok(/cursor\.set\(CONFIG, SECTION, 'fastpath_fo_hw_applied', fo_hw\)/.test(core),
 	'defaults record the initial hardware-offload write-back');
 ok(/set_config\(cursor, 'fastpath_fo_hw_applied', desired\.flow_offloading_hw\)/.test(core),

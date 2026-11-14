@@ -25,6 +25,7 @@ const WED_PARAMS = [
 ];
 
 const HW_COMPAT = /(mediatek,mt(7621|7622|7623|7629|7981|7986|7988|2701)|qcom,ipq(40|60|80|95)|marvell,armada|airoha,(en|an)[0-9])/;
+const MTK_COMPAT = /mediatek,mt(7621|7622|7623|7629|7981|7986|7988|2701)/;
 
 function read_text(path) {
 	let value = fs.readfile(path);
@@ -122,24 +123,36 @@ function boardinfo() {
 	};
 }
 
-function hw_platform() {
+function compatible_entries() {
 	let compat = fs.readfile('/proc/device-tree/compatible') ??
 	             fs.readfile('/sys/firmware/devicetree/base/compatible');
-	let entries, i;
 
-	if (compat != null) {
-		// The property is a NUL-separated list and the board entry normally
-		// comes first; ucode's regexp engine stops at the first NUL, so each
-		// compatible string has to be matched on its own.
-		entries = split(compat, "\0");
+	// The property is a NUL-separated list and the board entry normally comes
+	// first; ucode's regexp engine stops at the first NUL, so each compatible
+	// string has to be matched on its own.
+	return compat != null ? split(compat, "\0") : [];
+}
 
-		for (i = 0; i < length(entries); i++)
-			if (match(entries[i], HW_COMPAT) != null)
-				return true;
-	}
+function compat_matches(entries, pattern) {
+	let i;
+
+	for (i = 0; i < length(entries); i++)
+		if (match(entries[i], pattern) != null)
+			return true;
+
+	return false;
+}
+
+function hw_platform() {
+	if (compat_matches(compatible_entries(), HW_COMPAT))
+		return true;
 
 	// ipq40xx NSS / MediaTek PPE drivers registered at runtime
 	return module_dir('qca_ssdk') || module_dir('ess_edma') || module_dir('mtk_ppe');
+}
+
+function mtk_platform() {
+	return compat_matches(compatible_entries(), MTK_COMPAT);
 }
 
 function hnat_available() {
@@ -261,7 +274,7 @@ function detect() {
 		fullcone_broadcom: fc.broadcom,
 		tcpcca: fs.access('/proc/sys/net/ipv4/tcp_congestion_control') != null,
 		cca: read_cca(),
-		wed: find_wed() != null
+		wed: find_wed() != null && mtk_platform()
 	};
 }
 
@@ -503,8 +516,12 @@ function apply() {
 
 	let wed = find_wed();
 
-	if (wed != null)
-		write_text(wed, (engine == 'flow_offloading' && settings.fo_hw && features.offloading_hw && settings.wed) ? 'Y' : 'N');
+	if (wed != null) {
+		let enabled = mtk_platform() && engine == 'flow_offloading' &&
+		              settings.fo_hw && features.offloading_hw && settings.wed;
+
+		write_text(wed, enabled ? 'Y' : 'N');
+	}
 
 	let desired = desired_firewall(engine, settings, caps, features);
 
@@ -565,7 +582,8 @@ function defaults() {
 	let caps = fw4_caps();
 	let features = detect();
 	let engine = 'disabled';
-	let cca = cca_value('cubic', features.cca);
+	let current_cca = read_text('/proc/sys/net/ipv4/tcp_congestion_control');
+	let cca = cca_value(current_cca ?? 'cubic', features.cca);
 
 	ensure_section(cursor);
 
