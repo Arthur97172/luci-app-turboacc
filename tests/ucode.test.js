@@ -47,6 +47,41 @@ ok(/add chain inet turboacc_probe/.test(core), 'full-cone support is verified wi
 ok(core.includes("st.type == 'directory'"),
 	'loaded modules are recognised through the fs.stat directory type');
 
+/*
+ * /proc/device-tree/compatible is NUL-separated and the board entry normally
+ * comes first (e.g. "gemtek,w1700k-ubi" before "airoha,an7581"). Matching the
+ * whole buffer stops at the first NUL and misses the SoC entry, so every
+ * compatible string has to be tested on its own.
+ */
+ok(/split\(compat, "\\0"\)/.test(core),
+	'hardware detection splits the NUL-separated compatible list');
+ok(!/match\(compat, HW_COMPAT\)/.test(core),
+	'hardware detection does not match the whole compatible buffer');
+
+const hwCompat = core.match(/^const HW_COMPAT = (\/.*\/);$/m);
+
+if (hwCompat) {
+	const compat = 'gemtek,w1700k-ubi\0airoha,an7581\0airoha,en7581\0';
+	const entries = compat.split('\0');
+	const re = new RegExp(hwCompat[1].slice(1, -1));
+
+	ok(!re.test(entries[0]), 'the board compatible string alone is not hardware-capable');
+	ok(entries.some(entry => re.test(entry)),
+		'the AN7581 compatible string matches after splitting on NUL');
+}
+else {
+	ok(false, 'core defines the HW_COMPAT regexp');
+}
+
+ok(/cursor\.set\(CONFIG, SECTION, 'fastpath_fo_hw_applied', fo_hw\)/.test(core),
+	'defaults record the initial hardware-offload write-back');
+ok(/set_config\(cursor, 'fastpath_fo_hw_applied', desired\.flow_offloading_hw\)/.test(core),
+	'apply records the hardware-offload value it manages');
+ok(!/desired\.flow_offloading_hw = \(engine == 'flow_offloading' && settings\.fo_hw && features\.offloading_hw\) \? '1' : '0'/.test(core),
+	'apply keeps a manually enabled firewall setting on an unknown platform');
+ok(/result\.hw = boolval\(cursor\.get\(CONFIG, SECTION, 'fastpath_fo_hw'\)\)/.test(core),
+	'status derives hardware offload from the TurboACC setting, not the firewall alone');
+
 /* Every external command is a fixed string; no uci value reaches the shell. */
 const systemCalls = core.match(/system\((.*)\)/g) || [];
 

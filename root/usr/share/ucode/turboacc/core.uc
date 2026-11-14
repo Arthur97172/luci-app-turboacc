@@ -125,9 +125,18 @@ function boardinfo() {
 function hw_platform() {
 	let compat = fs.readfile('/proc/device-tree/compatible') ??
 	             fs.readfile('/sys/firmware/devicetree/base/compatible');
+	let entries, i;
 
-	if (compat != null && match(compat, HW_COMPAT) != null)
-		return true;
+	if (compat != null) {
+		// The property is a NUL-separated list and the board entry normally
+		// comes first; ucode's regexp engine stops at the first NUL, so each
+		// compatible string has to be matched on its own.
+		entries = split(compat, "\0");
+
+		for (i = 0; i < length(entries); i++)
+			if (match(entries[i], HW_COMPAT) != null)
+				return true;
+	}
 
 	// ipq40xx NSS / MediaTek PPE drivers registered at runtime
 	return module_dir('qca_ssdk') || module_dir('ess_edma') || module_dir('mtk_ppe');
@@ -378,8 +387,15 @@ function desired_firewall(engine, settings, caps, features) {
 			desired.flow_offloading = '0';
 	}
 
-	if (caps.flow_offloading_hw)
-		desired.flow_offloading_hw = (engine == 'flow_offloading' && settings.fo_hw && features.offloading_hw) ? '1' : '0';
+	if (caps.flow_offloading_hw) {
+		// Only write the option once the platform is known to be capable.
+		// Otherwise leave a manually enabled firewall value untouched instead
+		// of silently disabling it on a false negative.
+		if (engine == 'flow_offloading' && features.offloading_hw)
+			desired.flow_offloading_hw = settings.fo_hw ? '1' : '0';
+		else if (engine != 'flow_offloading')
+			desired.flow_offloading_hw = '0';
+	}
 
 	if (caps.flow_offloading_hw_ipv6)
 		desired.flow_offloading_hw_ipv6 = settings.fo_hw_ipv6 ? '1' : '0';
@@ -445,12 +461,22 @@ function apply_cca(value) {
 	write_text('/proc/sys/net/ipv4/tcp_congestion_control', cca_value(value, available));
 }
 
+function set_config(cursor, key, value) {
+	if (cursor.get(CONFIG, SECTION, key) == value)
+		return false;
+
+	cursor.set(CONFIG, SECTION, key, value);
+
+	return true;
+}
+
 function apply() {
 	let cursor = uci.cursor();
 	let settings = read_settings(cursor);
 	let caps = fw4_caps();
 	let features = detect();
 	let engine = normalize_fastpath(settings.fastpath);
+	let config_changed = false;
 
 	if (!engine_usable(engine, caps, features))
 		engine = 'disabled';
@@ -460,12 +486,35 @@ function apply() {
 	if (engine != 'disabled' && !start_engine(engine, settings))
 		engine = 'disabled';
 
+	/*
+	 * The hardware checkbox used to be hidden on platforms whose compatible
+	 * string was not parsed correctly, so hardware offload could only be
+	 * enabled through firewall UCI. Adopt that value once instead of clearing
+	 * it on the next apply.
+	 */
+	if (cursor.get(CONFIG, SECTION) != null &&
+	    engine == 'flow_offloading' && features.offloading_hw &&
+	    !settings.fo_hw &&
+	    cursor.get(CONFIG, SECTION, 'fastpath_fo_hw_applied') == null &&
+	    cursor.get(FWCONFIG, FWDEFAULTS, 'flow_offloading_hw') == '1') {
+		settings.fo_hw = true;
+		config_changed = set_config(cursor, 'fastpath_fo_hw', '1');
+	}
+
 	let wed = find_wed();
 
 	if (wed != null)
 		write_text(wed, (engine == 'flow_offloading' && settings.fo_hw && features.offloading_hw && settings.wed) ? 'Y' : 'N');
 
 	let desired = desired_firewall(engine, settings, caps, features);
+
+	if (cursor.get(CONFIG, SECTION) != null &&
+	    desired.flow_offloading_hw != null &&
+	    set_config(cursor, 'fastpath_fo_hw_applied', desired.flow_offloading_hw))
+		config_changed = true;
+
+	if (config_changed)
+		cursor.commit(CONFIG);
 
 	commit_firewall(desired);
 	apply_cca(desired.tcpcca ?? settings.tcpcca);
@@ -534,8 +583,11 @@ function defaults() {
 	else if (features.engines.shortcut_fe_cm)
 		engine = 'shortcut_fe_cm';
 
+	let fo_hw = (engine == 'flow_offloading' && features.offloading_hw) ? '1' : '0';
+
 	cursor.set(CONFIG, SECTION, 'fastpath', engine);
-	cursor.set(CONFIG, SECTION, 'fastpath_fo_hw', (engine == 'flow_offloading' && features.offloading_hw) ? '1' : '0');
+	cursor.set(CONFIG, SECTION, 'fastpath_fo_hw', fo_hw);
+	cursor.set(CONFIG, SECTION, 'fastpath_fo_hw_applied', fo_hw);
 	cursor.set(CONFIG, SECTION, 'fastpath_fo_hw_ipv6', '1');
 	cursor.set(CONFIG, SECTION, 'fastpath_fc_br', '1');
 	cursor.set(CONFIG, SECTION, 'fastpath_fc_ipv6', '1');
@@ -588,7 +640,10 @@ function status() {
 	if (result.engine == 'flow_offloading') {
 		let cursor = uci.cursor();
 
-		result.hw = cursor.get(FWCONFIG, FWDEFAULTS, 'flow_offloading_hw') == '1';
+		// The firewall value alone can outlive a TurboACC config change; both
+		// have to agree before hardware offload is reported as enabled.
+		result.hw = boolval(cursor.get(CONFIG, SECTION, 'fastpath_fo_hw')) &&
+		            cursor.get(FWCONFIG, FWDEFAULTS, 'flow_offloading_hw') == '1';
 	}
 
 	if (module_dir('nft_fullcone') && module_refcnt('nft_fullcone') > 0) {
