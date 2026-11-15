@@ -16,44 +16,30 @@ Highlights:
 - tuned for **luci-theme-bootstrap** (default in OpenWrt 24.10 / 25.12) and
   **luci-theme-argon 2.x / 3.x**.
 
-## Features
-
-| Feature | Description |
-| --- | --- |
-| Flow offloading | Software / hardware offload implemented by firewall4 |
-| Fast classifier | Shortcut-FE `fast_classifier` module (bridge and IPv6 toggles) |
-| Shortcut-FE CM | `shortcut_fe_cm` connection manager |
-| MediaTek HNAT | Vendor hardware NAT (`mtkhnat`), Ethernet / IPv6 / WED wireless |
-| Qualcomm NSS | `qca-nss-ecm` acceleration daemon |
-| Full-cone NAT | nftables `fullcone` statement or Broadcom `masquerade fullcone`, with IPv6 |
-| TCP congestion control | Chosen from the algorithms the kernel actually exposes |
-
-The status card polls every five seconds and shows the engine that is really active, hardware
-offload, full-cone mode, congestion control algorithm and platform details.
-
-## Requirements
-
-- OpenWrt / ImmortalWrt **24.10** (opkg) or **25.12** (apk), or contemporary snapshots;
-- **firewall4** — the package depends on it;
-- `ucode` with its `fs` and `uci` modules (shipped by default since OpenWrt 24.10).
-
-The package does not build kernel modules. Vendor acceleration (HNAT, NSS, SFE) requires
-modules already provided by the device firmware or a third-party feed; the page only offers
-what the running system supports.
+![TurboACC interface](screenshot.png)
 
 ## Install
 
-Download the package matching the system from
-[Releases](https://github.com/Arthur97172/luci-app-turboacc/releases):
+1. Download the package matching the system from
+   [Releases](https://github.com/Arthur97172/luci-app-turboacc/releases):
+2. Upload the package to the device (for example `/tmp`), then install it:
+
+**OpenWrt 24.10 and older (opkg)**
 
 ```sh
-# OpenWrt / ImmortalWrt 24.10 and older (opkg)
-opkg install luci-app-turboacc_*.ipk
-opkg install luci-i18n-turboacc-zh-cn_*.ipk    # optional: Chinese translation
+opkg install /tmp/luci-app-turboacc_*.ipk
 
-# OpenWrt / ImmortalWrt 25.12+ (apk)
-apk add --allow-untrusted luci-app-turboacc-*.apk
-apk add --allow-untrusted luci-i18n-turboacc-zh-cn-*.apk
+# optional: Simplified Chinese translation
+opkg install /tmp/luci-i18n-turboacc-zh-cn_*.ipk
+```
+
+**OpenWrt 25.12+ (apk)**
+
+```sh
+apk add --allow-untrusted /tmp/luci-app-turboacc-*.apk
+
+# optional: Simplified Chinese translation
+apk add --allow-untrusted /tmp/luci-i18n-turboacc-zh-cn-*.apk
 ```
 
 Packages are architecture independent (ipk `Architecture: all`, apk `noarch`), so one file
@@ -66,7 +52,21 @@ opkg remove luci-app-turboacc   # 24.10
 apk del luci-app-turboacc       # 25.12
 ```
 
-## Build and test locally
+### Build from source
+
+```sh
+cd openwrt
+./scripts/feeds update -a
+./scripts/feeds install -a
+git clone https://github.com/Arthur97172/luci-app-turboacc.git package/luci-app-turboacc
+make menuconfig     # LuCI → Applications → luci-app-turboacc
+make package/luci-app-turboacc/compile V=s
+```
+
+The packages are written to `bin/packages/<arch>/base/`, including the main package and
+`luci-i18n-turboacc-zh-cn`.
+
+### Build and test locally
 
 The tests need nothing but Node.js:
 
@@ -90,6 +90,31 @@ make package/luci-app-turboacc/compile V=s
 ```
 
 The packages land in `sdk/bin/packages/*/base/`, including `luci-i18n-turboacc-zh-cn`.
+
+## Features
+
+| Feature | Description |
+| --- | --- |
+| Flow offloading | Software / hardware offload implemented by firewall4 |
+| Fast classifier | Shortcut-FE `fast_classifier` module (bridge and IPv6 toggles) |
+| Shortcut-FE CM | `shortcut_fe_cm` connection manager |
+| MediaTek HNAT | Vendor hardware NAT (`mtkhnat`), Ethernet / IPv6 / WED wireless |
+| Qualcomm NSS | `qca-nss-ecm` acceleration daemon |
+| Full-cone NAT | nftables `fullcone` statement or Broadcom `masquerade fullcone`, with IPv6 |
+| TCP congestion control | Chosen from the algorithms the kernel actually exposes; hidden when only one is available |
+
+The status card polls every five seconds and shows the engine that is really active, hardware
+offload, full-cone mode, congestion control algorithm and platform details.
+
+## Requirements
+
+- OpenWrt / ImmortalWrt **24.10** (opkg) or **25.12** (apk), or contemporary snapshots;
+- **firewall4** — the package depends on it;
+- `ucode` with its `fs` and `uci` modules (shipped by default since OpenWrt 24.10).
+
+The package does not build kernel modules. Vendor acceleration (HNAT, NSS, SFE) requires
+modules already provided by the device firmware or a third-party feed; the page only offers
+what the running system supports.
 
 ## How it works
 
@@ -126,7 +151,8 @@ Saving the page makes ucitrack run `/etc/init.d/turboacc reload`, which invokes
 
 As a result:
 
-- stock OpenWrt only shows software/hardware flow offloading and TCP congestion control;
+- stock OpenWrt only shows software/hardware flow offloading, plus the congestion control
+  selector when the kernel offers more than one algorithm;
 - full-cone options appear only when the lede / ImmortalWrt fullcone patches are present;
 - MediaTek HNAT and WED require a `mtkhnat` module or HNAT debugfs node;
 - Qualcomm NSS requires `qca-nss-ecm`.

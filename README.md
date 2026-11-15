@@ -13,42 +13,29 @@ TurboACC 的 LuCI 前端，基于 **firewall4（nftables）** 重写，纯 JavaS
 - 自动适配 **亮色 / 暗色主题**，无需手动切换；
 - 适配 **luci-theme-bootstrap**（OpenWrt 24.10 / 25.12 默认主题）与 **luci-theme-argon 2.x / 3.x**。
 
-## 功能
-
-| 功能 | 说明 |
-| --- | --- |
-| 流量卸载 | 由 firewall4 实现的软件 / 硬件 flow offloading |
-| 快速分类器 | Shortcut-FE `fast_classifier` 内核模块（桥接、IPv6 开关） |
-| Shortcut-FE CM | `shortcut_fe_cm` 连接管理器 |
-| 联发科 HNAT | MediaTek `mtkhnat` 硬件 NAT（以太网 / IPv6 / WED 无线卸载） |
-| 高通 NSS | `qca-nss-ecm` 加速守护进程 |
-| 全锥形 NAT | nftables `fullcone` 语句或博通 `masquerade fullcone`，含 IPv6 开关 |
-| TCP 拥塞控制 | 从系统实际可用算法中选择（如 cubic / bbr）；只有一种可用算法时不显示选择项 |
-
-页面顶部的运行状态卡片每 5 秒轮询一次，显示当前真正生效的引擎、硬件卸载、全锥形模式、
-拥塞控制算法与平台信息。
-
-## 环境要求
-
-- OpenWrt / ImmortalWrt **24.10**（opkg）或 **25.12**（apk），或同代主线快照；
-- **firewall4**：本包硬依赖 `firewall4`；
-- `ucode` 及其 `fs` / `uci` 模块（OpenWrt 24.10 起为默认组件）。
-
-软件包本身不编译内核模块。要使用厂商加速（HNAT、NSS、SFE），需要设备固件或第三方 feed
-已经提供对应内核模块；页面只显示当前系统真正具备的选项。
+![TurboACC 界面截图](screenshot.png)
 
 ## 安装
 
-从 [Releases](https://github.com/Arthur97172/luci-app-turboacc/releases) 下载与系统版本对应的包：
+1. 从 [Releases](https://github.com/Arthur97172/luci-app-turboacc/releases) 下载与系统版本对应的包：
+2. 把安装包上传到设备（例如 `/tmp`），然后安装：
+
+**OpenWrt 24.10 及更早（opkg）**
 
 ```sh
-# OpenWrt / ImmortalWrt 24.10 及更早（opkg）
-opkg install luci-app-turboacc_*.ipk
-opkg install luci-i18n-turboacc-zh-cn_*.ipk    # 可选：中文翻译
+opkg install /tmp/luci-app-turboacc_*.ipk
 
-# OpenWrt / ImmortalWrt 25.12+（apk）
-apk add --allow-untrusted luci-app-turboacc-*.apk
-apk add --allow-untrusted luci-i18n-turboacc-zh-cn-*.apk
+#可选，安装简体中文语言包：
+opkg install /tmp/luci-i18n-turboacc-zh-cn_*.ipk
+```
+
+**OpenWrt 25.12+（apk）**
+
+```sh
+apk add --allow-untrusted /tmp/luci-app-turboacc-*.apk
+
+#可选，安装简体中文语言包：
+apk add --allow-untrusted /tmp/luci-i18n-turboacc-zh-cn-*.apk
 ```
 
 产物为架构无关包（ipk `Architecture: all`，apk `noarch`），同一份文件可装在 ARM 与 x86 上。
@@ -61,7 +48,20 @@ opkg remove luci-app-turboacc   # 24.10
 apk del luci-app-turboacc       # 25.12
 ```
 
-## 本地构建与测试
+### 从源码编译
+
+```sh
+cd openwrt
+./scripts/feeds update -a
+./scripts/feeds install -a
+git clone https://github.com/Arthur97172/luci-app-turboacc.git package/luci-app-turboacc
+make menuconfig     # LuCI → Applications → luci-app-turboacc
+make package/luci-app-turboacc/compile V=s
+```
+
+编译产物位于 `bin/packages/<架构>/base/` 目录下，主包和 `luci-i18n-turboacc-zh-cn` 会一并生成。
+
+### 本地构建与测试
 
 测试不需要 OpenWrt 环境：
 
@@ -85,6 +85,30 @@ make package/luci-app-turboacc/compile V=s
 ```
 
 产物位于 `sdk/bin/packages/*/base/`，包含主包与 `luci-i18n-turboacc-zh-cn`。
+
+## 功能
+
+| 功能 | 说明 |
+| --- | --- |
+| 流量卸载 | 由 firewall4 实现的软件 / 硬件 flow offloading |
+| 快速分类器 | Shortcut-FE `fast_classifier` 内核模块（桥接、IPv6 开关） |
+| Shortcut-FE CM | `shortcut_fe_cm` 连接管理器 |
+| 联发科 HNAT | MediaTek `mtkhnat` 硬件 NAT（以太网 / IPv6 / WED 无线卸载） |
+| 高通 NSS | `qca-nss-ecm` 加速守护进程 |
+| 全锥形 NAT | nftables `fullcone` 语句或博通 `masquerade fullcone`，含 IPv6 开关 |
+| TCP 拥塞控制 | 从系统实际可用算法中选择（如 cubic / bbr）；只有一种可用算法时不显示选择项 |
+
+页面顶部的运行状态卡片每 5 秒轮询一次，显示当前真正生效的引擎、硬件卸载、全锥形模式、
+拥塞控制算法与平台信息。
+
+## 环境要求
+
+- OpenWrt / ImmortalWrt **24.10**（opkg）或 **25.12**（apk），或同代主线快照；
+- **firewall4**：本包硬依赖 `firewall4`；
+- `ucode` 及其 `fs` / `uci` 模块（OpenWrt 24.10 起为默认组件）。
+
+软件包本身不编译内核模块。要使用厂商加速（HNAT、NSS、SFE），需要设备固件或第三方 feed
+已经提供对应内核模块；页面只显示当前系统真正具备的选项。
 
 ## 工作原理
 
