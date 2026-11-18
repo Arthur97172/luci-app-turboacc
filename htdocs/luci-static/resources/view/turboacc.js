@@ -128,6 +128,9 @@ return view.extend({
 		if (engine === 'flow_offloading' && status.hw)
 			engineText += ' · ' + _('Hardware');
 
+		if (engine === null && status.deferred === 'qca_nss_ecm')
+			engineText += ' · ' + _('waiting for the full NSS tier');
+
 		dom.content(card.cells.engine, [
 			E('span', { 'class': 'turboacc-dot ' + (engine ? 'is-on' : 'is-off') }),
 			E('span', { 'class': 'turboacc-engine' }, [ engineText ])
@@ -173,7 +176,12 @@ return view.extend({
 		option.rmempty = false;
 
 		engines.forEach(function(engine) {
-			option.value(engine, engineTitle(engine), engineDescription(engine));
+			var description = engineDescription(engine);
+
+			if (engine === 'qca_nss_ecm' && features.nss_ecm_ready === false)
+				description += ' ' + _('The NSS stack is loaded in the wired tier, where ECM is not started; select the full tier in /etc/nss.conf first.');
+
+			option.value(engine, engineTitle(engine), description);
 		});
 
 		if (features.offloading_hw) {

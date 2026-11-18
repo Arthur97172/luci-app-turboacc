@@ -51,6 +51,36 @@ eq(
 	'availableEngines tolerates a missing features object'
 );
 
+eq(
+	utils.availableEngines({
+		offloading: false,
+		engines: { qca_nss_ecm: true },
+		nss_ecm_ready: false
+	}, 'disabled'),
+	[ 'disabled' ],
+	'availableEngines hides the QCA engine while the NSS tier holds it back'
+);
+
+eq(
+	utils.availableEngines({
+		offloading: false,
+		engines: { qca_nss_ecm: true },
+		nss_ecm_ready: false
+	}, 'qca_nss_ecm'),
+	[ 'disabled', 'qca_nss_ecm' ],
+	'a tier-blocked QCA engine stays selectable while it is configured'
+);
+
+eq(
+	utils.availableEngines({
+		offloading: false,
+		engines: { qca_nss_ecm: true },
+		nss_ecm_ready: true
+	}, 'disabled'),
+	[ 'disabled', 'qca_nss_ecm' ],
+	'the QCA engine is offered once the NSS tier starts ECM'
+);
+
 eq(utils.sanitizeCca('BBR', [ 'cubic', 'bbr' ]), 'bbr', 'sanitizeCca lowercases and accepts');
 eq(utils.sanitizeCca('westwood', [ 'cubic', 'bbr' ]), 'cubic', 'sanitizeCca falls back to cubic');
 eq(utils.sanitizeCca('westwood', [ 'reno', 'bbr' ]), 'reno', 'sanitizeCca falls back to first');

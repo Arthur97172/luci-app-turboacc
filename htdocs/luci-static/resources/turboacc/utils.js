@@ -51,6 +51,14 @@ function availableEngines(features, current) {
 		list.push('flow_offloading');
 
 	[ 'fast_classifier', 'shortcut_fe_cm', 'mediatek_hnat', 'qca_nss_ecm' ].forEach(function(name) {
+		/*
+		 * The QCA engine is only offered when the NSS tier will actually
+		 * start it; a previously stored choice stays selectable through
+		 * `current` below so the page never rewrites the config by itself.
+		 */
+		if (name === 'qca_nss_ecm' && features && features.nss_ecm_ready === false)
+			return;
+
 		if (engines[name])
 			list.push(name);
 	});

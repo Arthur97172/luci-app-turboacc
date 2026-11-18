@@ -481,6 +481,53 @@ const qca = render({ offloading: false, engines: { qca_nss_ecm: true }, cca: [ '
 eq(values(findOption(qca.map, 'fastpath')), [ 'disabled', 'qca_nss_ecm' ],
 	'engine list adapts when flow offloading is unavailable');
 
+/* --- QCA NSS held back by the NSS tier ------------------------------------ */
+
+const blockedFeatures = {
+	offloading: false,
+	engines: { qca_nss_ecm: true },
+	nss_ecm_ready: false,
+	cca: [ 'cubic' ]
+};
+
+const blocked = render(blockedFeatures,
+	{ engine: null, deferred: 'qca_nss_ecm', cca: 'cubic' }, 'qca_nss_ecm');
+const blockedOption = findOption(blocked.map, 'fastpath');
+
+eq(values(blockedOption), [ 'disabled', 'qca_nss_ecm' ],
+	'a tier-blocked engine stays selectable while it is configured');
+ok(/wired tier/.test(blockedOption.values[1].desc),
+	'the blocked engine explains which tier enables it');
+
+const blockedEngineCell =
+	blocked.page.children[0].children[2].children[1].children[0].children[0].children[1];
+
+eq(blockedEngineCell.children[0].attrs['class'], 'turboacc-dot is-off',
+	'a deferred engine keeps the status dot off');
+eq(blockedEngineCell.children[1].children,
+	[ 'Not running · waiting for the full NSS tier' ],
+	'the status card explains why the engine is idle');
+
+const blockedIdle = render(blockedFeatures, { engine: null, cca: 'cubic' }, 'disabled');
+
+eq(values(findOption(blockedIdle.map, 'fastpath')), [ 'disabled' ],
+	'the QCA engine is hidden while the tier holds it back');
+
+const readyFeatures = {
+	offloading: false,
+	engines: { qca_nss_ecm: true },
+	nss_ecm_ready: true,
+	cca: [ 'cubic' ]
+};
+
+const ready = render(readyFeatures, {}, 'qca_nss_ecm');
+const readyOption = findOption(ready.map, 'fastpath');
+
+eq(values(readyOption), [ 'disabled', 'qca_nss_ecm' ],
+	'the QCA engine is offered once the tier starts ECM');
+ok(!/wired tier/.test(readyOption.values[1].desc),
+	'the full tier adds no warning to the engine description');
+
 /* --- engines without sub-options leave room below the section ------------- */
 
 const sparsePage = qca.page.children[0];

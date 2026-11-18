@@ -132,6 +132,9 @@ msgstr ""
 msgid "TCP congestion control"
 msgstr ""
 
+msgid "The NSS stack is loaded in the wired tier, where ECM is not started; select the full tier in /etc/nss.conf first."
+msgstr ""
+
 msgid "TurboACC"
 msgstr ""
 
@@ -145,4 +148,7 @@ msgid "When disabled, IPv6 traffic takes the regular forwarding path while IPv4 
 msgstr ""
 
 msgid "Wireless WED offload"
+msgstr ""
+
+msgid "waiting for the full NSS tier"
 msgstr ""

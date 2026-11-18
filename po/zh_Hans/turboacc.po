@@ -134,6 +134,9 @@ msgstr "由 firewall4（nftables）实现的软件或硬件流量卸载。"
 msgid "TCP congestion control"
 msgstr "TCP 拥塞控制"
 
+msgid "The NSS stack is loaded in the wired tier, where ECM is not started; select the full tier in /etc/nss.conf first."
+msgstr "当前 NSS 以 wired 档位装载，不会启动 ECM；请先在 /etc/nss.conf 里选择 full 档位。"
+
 msgid "TurboACC"
 msgstr "TurboACC加速"
 
@@ -148,3 +151,6 @@ msgstr "禁用时，IPv6 流量走常规转发路径，仅 IPv4 使用硬件卸�
 
 msgid "Wireless WED offload"
 msgstr "无线 WED 卸载"
+
+msgid "waiting for the full NSS tier"
+msgstr "等待 full 档位"

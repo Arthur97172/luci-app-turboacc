@@ -3,7 +3,7 @@
 const path = require('path');
 const os = require('os');
 const { spawnSync } = require('child_process');
-const { ok, summary, read } = require('./lib');
+const { ok, eq, summary, read } = require('./lib');
 
 const core = read('root/usr/share/ucode/turboacc/core.uc');
 const main = read('root/usr/share/ucode/turboacc/main.uc');
@@ -94,6 +94,45 @@ ok(/cca_value\(current_cca \?\? 'cubic', features\.cca\)/.test(core),
 	'defaults preserve the current congestion control algorithm');
 ok(!/cca_value\('cubic', features\.cca\)/.test(core),
 	'defaults do not force cubic over the current sysctl');
+
+/* --- NSS tier gating ------------------------------------------------------ */
+
+ok(core.includes('const NSS_CONF = \'/etc/nss.conf\';'),
+	'core reads the NSS tier from /etc/nss.conf');
+ok(/nss_tier: nss_tier\(\),/.test(core), 'detect reports the NSS tier');
+ok(/nss_ecm_ready: nss_ecm_ready\(\),/.test(core), 'detect reports whether ECM may start');
+ok(/return tier == null \|\| tier == 'full';/.test(core),
+	'ECM is ready without tier control or with the full tier');
+ok(/features\.engines\.qca_nss_ecm && features\.nss_ecm_ready != false/.test(core),
+	'engine_usable holds the QCA engine back below the full tier');
+ok(/if \(!nss_ecm_ready\(\) \|\| !fs\.access\('\/etc\/init\.d\/qca-nss-ecm'\)\)/.test(core),
+	'start_engine refuses the QCA engine below the full tier');
+ok(/features\.engines\.qca_nss_ecm && features\.nss_ecm_ready\)/.test(core),
+	'defaults pick the QCA engine only when the tier starts ECM');
+ok(/result\.deferred = 'qca_nss_ecm'/.test(core),
+	'status explains a QCA engine that the tier holds back');
+
+const tierExpr = core.match(/let m = match\(src, (\/[^\n]*\/m)\);/);
+
+if (tierExpr) {
+	const source = tierExpr[1];
+	const re = new RegExp(source.slice(1, source.lastIndexOf('/')),
+		source.slice(source.lastIndexOf('/') + 1));
+	const tierOf = text => {
+		const m = re.exec(text);
+
+		return m != null ? m[1] : null;
+	};
+
+	eq(tierOf('tier=full\n'), 'full', 'a bare tier line is parsed');
+	eq(tierOf("tier = 'wired'\n"), 'wired', 'quoted values are unwrapped');
+	eq(tierOf('tier="full"\n'), 'full', 'double quotes are unwrapped');
+	eq(tierOf('# tier=full\nfallback=wired\n'), null,
+		'a commented tier line is not a tier');
+}
+else {
+	ok(false, 'core parses the tier line with a regexp');
+}
 
 ok(/cursor\.set\(CONFIG, SECTION, 'fastpath_fo_hw_applied', fo_hw\)/.test(core),
 	'defaults record the initial hardware-offload write-back');

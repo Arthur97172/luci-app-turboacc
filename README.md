@@ -146,7 +146,25 @@ config turboacc 'config'
 - 原版 OpenWrt 上只会出现软件/硬件 flow offloading，以及系统有多种拥塞控制算法时的选择项；
 - 打了 lede / ImmortalWrt fullcone 补丁的系统才会出现全锥形选项；
 - 有 `mtkhnat`（或 HNAT 调试节点）的系统才会出现联发科 HNAT 与 WED；
-- 有 `qca-nss-ecm` 的系统才会出现高通 NSS。
+- 有 `qca-nss-ecm` 的系统才会出现高通 NSS；若该系统还用 `/etc/nss.conf` 的 `tier`
+  分层装载 NSS（QSDK 系固件常见），则只有 `tier=full` 时才会真正启动 ECM，
+  `tier=wired` 下引擎不会出现在下拉框里，已保存的选择仍保留并显示
+  「等待 full 档位」，避免每次开机都去拉起一套缺依赖的内核模块。
+
+## NSS 分层
+
+部分厂商固件把 QSDK NSS 栈拆成两档，由 `/etc/nss.conf` 里的 `tier` 决定
+`nss-load` 装载到哪一层：
+
+- `tier=wired`：只装 `qca-nss-ssdk` 与 `qca-nss-dp`，转发走常规路径；
+- `tier=full`：继续装载 PPE rule → shortcut-fe → ECM 整条链。
+
+TurboACC 在启动 ECM 前先读这个文件：档位不是 `full`（或 `nss-load` 会在缺
+`tier` 行时回落到 `wired`）就跳过 ECM，页面把该状态标注为「等待 full 档位」。
+没有 `/etc/nss.conf` 的系统不受影响，行为与以前完全一致。
+
+若要在该系统上真正启用 ECM，需要先在 `/etc/nss.conf` 里把档位改成 `full`，
+确认 `nss-load` 能完整装载后再回 TurboACC 页面选择「高通 NSS ECM」。
 
 ## 主题适配
 

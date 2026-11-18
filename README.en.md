@@ -155,7 +155,28 @@ As a result:
   selector when the kernel offers more than one algorithm;
 - full-cone options appear only when the lede / ImmortalWrt fullcone patches are present;
 - MediaTek HNAT and WED require a `mtkhnat` module or HNAT debugfs node;
-- Qualcomm NSS requires `qca-nss-ecm`.
+- Qualcomm NSS requires `qca-nss-ecm`; when the firmware also stages the NSS stack
+  through the `tier` setting in `/etc/nss.conf` (common on QSDK trees), ECM is only
+  started under `tier=full`. Under `tier=wired` the engine is not offered in the
+  dropdown, a stored choice stays selectable and the status card reads
+  "waiting for the full NSS tier", instead of trying to load a module chain with
+  missing dependencies on every boot.
+
+## NSS tiers
+
+Some vendor firmwares split the QSDK NSS stack in two, and `nss-load` reads the `tier`
+setting from `/etc/nss.conf`:
+
+- `tier=wired`: loads `qca-nss-ssdk` and `qca-nss-dp` only, forwarding takes the regular path;
+- `tier=full`: continues with the PPE rule → shortcut-fe → ECM chain.
+
+TurboACC reads that file before starting ECM: when the tier is not `full` (and
+`nss-load` falls back to `wired` when the file carries no `tier` line), the engine is
+skipped and the page marks it as "waiting for the full NSS tier". Systems without
+`/etc/nss.conf` are unaffected and behave exactly as before.
+
+To actually use ECM there, set the tier to `full` in `/etc/nss.conf`, confirm that
+`nss-load` brings the whole chain up, then select "QCA NSS ECM" in TurboACC.
 
 ## Themes
 

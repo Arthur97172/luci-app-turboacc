@@ -72,6 +72,34 @@ function module_refcnt(name) {
 	return read_int('/sys/module/' + name + '/refcnt') ?? 0;
 }
 
+/*
+ * Some vendor trees park the QSDK NSS stack behind /etc/nss.conf: the boot
+ * loader script only loads ssdk+dp in the "wired" tier and the ECM/SFE chain
+ * in the "full" one. Starting the ECM engine below that tier just produces
+ * failed insmods (ECM needs shortcut-fe symbols, shortcut-fe needs the PPE
+ * rule module), so the engine is unusable until the tier says otherwise.
+ */
+const NSS_CONF = '/etc/nss.conf';
+
+function nss_tier() {
+	let src = fs.readfile(NSS_CONF);
+
+	/* No tier control at all: the NSS init script owns its own state. */
+	if (src == null)
+		return null;
+
+	let m = match(src, /^\s*tier\s*=\s*['"]?([A-Za-z0-9_-]+)['"]?\s*$/m);
+
+	/* nss-load falls back to "wired" when the file carries no tier line. */
+	return m != null ? m[1] : 'wired';
+}
+
+function nss_ecm_ready() {
+	let tier = nss_tier();
+
+	return tier == null || tier == 'full';
+}
+
 function boolval(value) {
 	let v;
 
@@ -248,6 +276,8 @@ function detect() {
 			mediatek_hnat: hnat_available(),
 			qca_nss_ecm: fs.access('/etc/init.d/qca-nss-ecm') != null
 		},
+		nss_tier: nss_tier(),
+		nss_ecm_ready: nss_ecm_ready(),
 		fullcone: caps.fullcone,
 		fullcone_nft: fc.nft,
 		fullcone_broadcom: fc.broadcom,
@@ -291,7 +321,7 @@ function engine_usable(engine, caps, features) {
 		return caps.flow_offloading;
 
 	if (engine == 'qca_nss_ecm')
-		return features.engines.qca_nss_ecm;
+		return features.engines.qca_nss_ecm && features.nss_ecm_ready != false;
 
 	return features.engines[engine] == true;
 }
@@ -356,7 +386,7 @@ function start_engine(engine, settings) {
 	}
 
 	if (engine == 'qca_nss_ecm') {
-		if (!fs.access('/etc/init.d/qca-nss-ecm'))
+		if (!nss_ecm_ready() || !fs.access('/etc/init.d/qca-nss-ecm'))
 			return false;
 
 		system('/etc/init.d/qca-nss-ecm restart >/dev/null 2>&1');
@@ -569,7 +599,7 @@ function defaults() {
 	if (boolval(cursor.get(CONFIG, SECTION, 'initialized')))
 		return 0;
 
-	if (features.engines.qca_nss_ecm)
+	if (features.engines.qca_nss_ecm && features.nss_ecm_ready)
 		engine = 'qca_nss_ecm';
 	else if (features.engines.mediatek_hnat)
 		engine = 'mediatek_hnat';
@@ -631,6 +661,17 @@ function status() {
 	else if (module_refcnt('nft_flow_offload') > 0) {
 		result.engine = 'flow_offloading';
 	}
+
+	/*
+	 * A configured engine that the NSS tier deliberately holds back would
+	 * otherwise show up as a plain "not running" with no explanation.
+	 */
+	let wanted = normalize_fastpath(uci.cursor().get(CONFIG, SECTION, 'fastpath') ?? 'disabled');
+
+	result.nss_tier = nss_tier();
+
+	if (result.engine == null && wanted == 'qca_nss_ecm' && !nss_ecm_ready())
+		result.deferred = 'qca_nss_ecm';
 
 	if (result.engine == 'flow_offloading') {
 		let cursor = uci.cursor();
