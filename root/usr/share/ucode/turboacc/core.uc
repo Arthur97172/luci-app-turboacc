@@ -88,10 +88,19 @@ function nss_tier() {
 	if (src == null)
 		return null;
 
-	let m = match(src, /^\s*tier\s*=\s*['"]?([A-Za-z0-9_-]+)['"]?\s*$/m);
+	/*
+	 * Line by line, because the OpenWrt 25.12 ucode build rejects the "m"
+	 * (multiline) regex flag outright.
+	 */
+	for (let line in split('' + src, '\n')) {
+		let m = match(line, /^\s*tier\s*=\s*['"]?([A-Za-z0-9_-]+)['"]?\s*$/);
+
+		if (m != null)
+			return m[1];
+	}
 
 	/* nss-load falls back to "wired" when the file carries no tier line. */
-	return m != null ? m[1] : 'wired';
+	return 'wired';
 }
 
 function nss_ecm_ready() {

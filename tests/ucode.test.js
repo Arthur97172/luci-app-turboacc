@@ -112,16 +112,21 @@ ok(/features\.engines\.qca_nss_ecm && features\.nss_ecm_ready\)/.test(core),
 ok(/result\.deferred = 'qca_nss_ecm'/.test(core),
 	'status explains a QCA engine that the tier holds back');
 
-const tierExpr = core.match(/let m = match\(src, (\/[^\n]*\/m)\);/);
+const tierExpr = core.match(/let m = match\(line, (\/[^\n]*\/)\);/);
 
 if (tierExpr) {
 	const source = tierExpr[1];
 	const re = new RegExp(source.slice(1, source.lastIndexOf('/')),
 		source.slice(source.lastIndexOf('/') + 1));
 	const tierOf = text => {
-		const m = re.exec(text);
+		for (const line of text.split('\n')) {
+			const m = re.exec(line);
 
-		return m != null ? m[1] : null;
+			if (m != null)
+				return m[1];
+		}
+
+		return null;
 	};
 
 	eq(tierOf('tier=full\n'), 'full', 'a bare tier line is parsed');
@@ -133,6 +138,12 @@ if (tierExpr) {
 else {
 	ok(false, 'core parses the tier line with a regexp');
 }
+
+/*
+ * The OpenWrt 25.12 ucode build rejects the "m" (multiline) regex flag at
+ * compile time, which took the whole backend down on that platform.
+ */
+ok(!/\/m[;,)]/.test(core), 'core avoids the "m" regex flag (unsupported on 25.12)');
 
 ok(/cursor\.set\(CONFIG, SECTION, 'fastpath_fo_hw_applied', fo_hw\)/.test(core),
 	'defaults record the initial hardware-offload write-back');
